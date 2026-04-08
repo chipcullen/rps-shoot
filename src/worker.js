@@ -44,7 +44,14 @@ export class GameRoom {
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
 
-      if (data.type === "pick") {
+      if (data.type === "series_start" || data.type === "play_again") {
+        // Relay to the other player only
+        for (const p of this.players) {
+          if (p !== player) {
+            try { p.ws.send(JSON.stringify({ type: data.type })); } catch {}
+          }
+        }
+      } else if (data.type === "pick") {
         const valid = ["rock", "paper", "scissors"];
         if (!valid.includes(data.pick)) return;
 
@@ -52,6 +59,13 @@ export class GameRoom {
 
         // Let this player know their pick was received
         server.send(JSON.stringify({ type: "pick_received" }));
+
+        // Notify the other player that their opponent has locked in
+        for (const p of this.players) {
+          if (p !== player) {
+            try { p.ws.send(JSON.stringify({ type: "opponent_picked" })); } catch {}
+          }
+        }
 
         // If both players have picked, resolve
         if (this.players.length === 2 && this.players[0].pick && this.players[1].pick) {

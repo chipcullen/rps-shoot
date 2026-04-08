@@ -30,13 +30,27 @@
         <button class="choice" data-pick="paper">📄</button>
         <button class="choice" data-pick="scissors">✂️</button>
       </div>
+      <p id="game-series-score" hidden></p>
     </div>
 
     <div id="screen-result" hidden>
       <p id="result-outcome"></p>
       <p id="result-detail"></p>
-      <button id="btn-rematch">Play Again</button>
+      <div class="result-actions">
+        <button id="btn-rematch">Play Again</button>
+        <button id="btn-best-of-3">Best 2 out of 3?</button>
+        <div id="result-choices" hidden>
+          <button class="choice" data-pick="rock">🪨</button>
+          <button class="choice" data-pick="paper">📄</button>
+          <button class="choice" data-pick="scissors">✂️</button>
+        </div>
+      </div>
+      <p id="series-score" hidden></p>
     </div>
+
+    <footer id="footer-home" hidden>
+      <button id="btn-go-home" class="btn-ghost">← Home</button>
+    </footer>
   </main>
   <script src="game.js"></script>
 </body>
