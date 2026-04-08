@@ -16,6 +16,12 @@
   }
 }
 
+@keyframes screenFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+
 @keyframes bg {
   0% {
     background-position: left;
@@ -167,6 +173,14 @@ button:disabled {
   font-size: 0.85rem;
   padding: 0.4rem 0.75rem;
 }
+
+#screen-lobby:not([hidden]),
+#screen-waiting:not([hidden]),
+#screen-game:not([hidden]),
+#screen-result:not([hidden]) {
+  animation: screenFadeIn var(--duration) ease-out;
+}
+
 
 .btn-ghost:hover {
   background: transparent;
