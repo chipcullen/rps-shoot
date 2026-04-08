@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith("/game/")) {
-      const roomId = url.pathname.slice(6); // strip /game/
+      const roomId = url.pathname.slice(6);
       if (!roomId) return new Response("Missing room ID", { status: 400 });
 
       const id = env.GAME_ROOM.idFromName(roomId);
@@ -18,7 +18,9 @@ export default {
 export class GameRoom {
   constructor(state) {
     this.state = state;
-    this.players = []; // [{ ws, pick }]
+    // slots: [{ token, ws, pick }] — index 0 = player 1, index 1 = player 2
+    // ws is null when that player is disconnected
+    this.slots = [];
   }
 
   async fetch(request) {
@@ -27,71 +29,97 @@ export class GameRoom {
       return new Response("Expected WebSocket", { status: 426 });
     }
 
-    if (this.players.length >= 2) {
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token");
+    if (!token) return new Response("Missing token", { status: 400 });
+
+    // Check if this token belongs to an existing slot (reconnect)
+    const existingSlot = this.slots.find((s) => s.token === token);
+
+    // If no existing slot and room is full, reject
+    if (!existingSlot && this.slots.length >= 2) {
       return new Response("Room full", { status: 409 });
     }
 
     const { 0: client, 1: server } = new WebSocketPair();
     server.accept();
 
-    const player = { ws: server, pick: null };
-    this.players.push(player);
-    const playerIndex = this.players.length - 1;
+    let slot;
+    if (existingSlot) {
+      // Reconnect: swap in the new WebSocket
+      existingSlot.ws = server;
+      slot = existingSlot;
+    } else {
+      // New player: create a slot
+      slot = { token, ws: server, pick: null };
+      this.slots.push(slot);
+    }
 
-    this.broadcast({ type: "player_count", count: this.players.length });
+    const connectedCount = this.slots.filter((s) => s.ws !== null).length;
+
+    // Send this player their current state
+    const reconnectState = {
+      type: "reconnected",
+      playerIndex: this.slots.indexOf(slot),
+      connectedCount,
+      yourPick: slot.pick,
+      opponentPicked: this.slots.find((s) => s !== slot)?.pick !== null &&
+                      this.slots.find((s) => s !== slot)?.pick !== undefined,
+    };
+    server.send(JSON.stringify(reconnectState));
+
+    // Notify everyone of updated player count
+    this.broadcast({ type: "player_count", count: connectedCount });
 
     server.addEventListener("message", (event) => {
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
 
       if (data.type === "series_start" || data.type === "play_again") {
-        // Relay to the other player only
-        for (const p of this.players) {
-          if (p !== player) {
-            try { p.ws.send(JSON.stringify({ type: data.type })); } catch {}
+        for (const s of this.slots) {
+          if (s !== slot && s.ws) {
+            try { s.ws.send(JSON.stringify({ type: data.type })); } catch {}
           }
         }
       } else if (data.type === "pick") {
         const valid = ["rock", "paper", "scissors"];
         if (!valid.includes(data.pick)) return;
 
-        player.pick = data.pick;
+        slot.pick = data.pick;
 
-        // Let this player know their pick was received
         server.send(JSON.stringify({ type: "pick_received" }));
 
-        // Notify the other player that their opponent has locked in
-        for (const p of this.players) {
-          if (p !== player) {
-            try { p.ws.send(JSON.stringify({ type: "opponent_picked" })); } catch {}
+        for (const s of this.slots) {
+          if (s !== slot && s.ws) {
+            try { s.ws.send(JSON.stringify({ type: "opponent_picked" })); } catch {}
           }
         }
 
-        // If both players have picked, resolve
-        if (this.players.length === 2 && this.players[0].pick && this.players[1].pick) {
-          const result = resolve(this.players[0].pick, this.players[1].pick);
-          this.players[0].ws.send(JSON.stringify({
+        // Resolve if both players have picked
+        if (this.slots.length === 2 && this.slots[0].pick && this.slots[1].pick) {
+          const result = resolve(this.slots[0].pick, this.slots[1].pick);
+          this.slots[0].ws?.send(JSON.stringify({
             type: "result",
-            yourPick: this.players[0].pick,
-            theirPick: this.players[1].pick,
+            yourPick: this.slots[0].pick,
+            theirPick: this.slots[1].pick,
             outcome: result === 0 ? "draw" : result === 1 ? "win" : "lose",
           }));
-          this.players[1].ws.send(JSON.stringify({
+          this.slots[1].ws?.send(JSON.stringify({
             type: "result",
-            yourPick: this.players[1].pick,
-            theirPick: this.players[0].pick,
+            yourPick: this.slots[1].pick,
+            theirPick: this.slots[0].pick,
             outcome: result === 0 ? "draw" : result === 2 ? "win" : "lose",
           }));
-          // Reset picks for rematch
-          this.players[0].pick = null;
-          this.players[1].pick = null;
+          this.slots[0].pick = null;
+          this.slots[1].pick = null;
         }
       }
     });
 
     server.addEventListener("close", () => {
-      this.players = this.players.filter((p) => p !== player);
-      this.broadcast({ type: "player_count", count: this.players.length });
+      slot.ws = null;
+      const connectedCount = this.slots.filter((s) => s.ws !== null).length;
+      this.broadcast({ type: "player_count", count: connectedCount });
     });
 
     return new Response(null, { status: 101, webSocket: client });
@@ -99,8 +127,10 @@ export class GameRoom {
 
   broadcast(msg) {
     const text = JSON.stringify(msg);
-    for (const p of this.players) {
-      try { p.ws.send(text); } catch {}
+    for (const s of this.slots) {
+      if (s.ws) {
+        try { s.ws.send(text); } catch {}
+      }
     }
   }
 }

@@ -47,6 +47,16 @@ function generateRoomId() {
   return Math.random().toString(36).slice(2, 8);
 }
 
+function getToken(roomId) {
+  const key = `rps-token-${roomId}`;
+  let token = sessionStorage.getItem(key);
+  if (!token) {
+    token = Math.random().toString(36).slice(2, 14);
+    sessionStorage.setItem(key, token);
+  }
+  return token;
+}
+
 function startSeries() {
   seriesMode = true;
   mySeriesWins = 0;
@@ -77,7 +87,8 @@ function showSeriesScore() {
 
 function connect(roomId) {
   currentRoomId = roomId;
-  ws = new WebSocket(`${WS_BASE}/game/${roomId}`);
+  const token = getToken(roomId);
+  ws = new WebSocket(`${WS_BASE}/game/${roomId}?token=${token}`);
 
   ws.addEventListener("open", () => {
     console.log("WebSocket connected");
@@ -104,6 +115,28 @@ function connect(roomId) {
 
 function handleMessage(msg) {
   switch (msg.type) {
+    case "reconnected":
+      if (msg.connectedCount === 2) {
+        if (msg.yourPick) {
+          gameStatus.textContent = "Pick locked in. Waiting for opponent…";
+          setChoicesEnabled(false);
+        } else if (msg.opponentPicked) {
+          gameStatus.textContent = "Opponent is locked in. Make your pick!";
+          setChoicesEnabled(true);
+        } else {
+          gameStatus.textContent = "Make your pick.";
+          setChoicesEnabled(true);
+        }
+        show("game");
+      } else if (screens.waiting.hidden) {
+        // Reconnecting solo — show game screen in waiting state
+        gameStatus.textContent = "Waiting for opponent…";
+        setChoicesEnabled(false);
+        show("game");
+      }
+      // If we're already on the waiting screen (fresh game creator), stay there
+      break;
+
     case "player_count":
       if (msg.count === 1) {
         if (!screens.waiting.hidden) return;
