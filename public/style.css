@@ -1,3 +1,31 @@
+:root {
+  --hdr-gradient: linear-gradient(
+    221deg in oklab,
+    oklch(80% 0.5 200deg),
+    oklch(70% 0.5 160deg) 42%,
+    oklch(80% 0.3 161deg) 59%,
+    oklch(80% 0.3 40deg)
+  );
+  --duration: 0.2s;
+
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+
+  @media (prefers-reduced-motion: reduce) {
+    --duration: 0s;
+  }
+}
+
+@keyframes bg {
+  0% {
+    background-position: left;
+  }
+
+  100% {
+    background-position: right;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -23,6 +51,18 @@ main {
 
 h1 {
   margin-bottom: 2rem;
+  font-size: clamp(30px, 5vw, 60px);
+  margin-block: 40px 0;
+  font-weight: 900;
+  background-image: var(--hdr-gradient);
+  background-clip: text;
+  color: transparent;
+  background-size: 300%;
+  animation: bg 12s infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 button {
@@ -32,12 +72,20 @@ button {
   border: 2px solid #333;
   background: #fff;
   border-radius: 6px;
+  transition-property: transform, background, color;
+  transition-duration: var(--duration);
 }
 
 button:hover:not(:disabled) {
   background: #333;
   color: #fff;
+  transform: scale(1.15);
 }
+
+button:active:not(:disabled) {
+  transform: scale(1.1);
+}
+
 button:disabled {
   opacity: 0.4;
   cursor: default;
