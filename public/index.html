@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rock Paper Scissors</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Rock, Paper, Scissors</h1>
+
+    <div id="screen-lobby">
+      <button id="btn-new-game">New Game</button>
+    </div>
+
+    <div id="screen-waiting" hidden>
+      <p>Send this link to your opponent:</p>
+      <div class="share-row">
+        <input id="share-url" type="text" readonly>
+        <button id="btn-copy">Copy</button>
+      </div>
+      <p class="status">Waiting for opponent to join…</p>
+    </div>
+
+    <div id="screen-game" hidden>
+      <p id="game-status"></p>
+      <div class="choices">
+        <button class="choice" data-pick="rock">🪨</button>
+        <button class="choice" data-pick="paper">📄</button>
+        <button class="choice" data-pick="scissors">✂️</button>
+      </div>
+    </div>
+
+    <div id="screen-result" hidden>
+      <p id="result-outcome"></p>
+      <p id="result-detail"></p>
+      <button id="btn-rematch">Play Again</button>
+    </div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
