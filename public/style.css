@@ -52,7 +52,6 @@ main {
 h1 {
   margin-bottom: 2rem;
   font-size: clamp(30px, 5vw, 60px);
-  margin-block: 40px 0;
   font-weight: 900;
   background-image: var(--hdr-gradient);
   background-clip: text;
