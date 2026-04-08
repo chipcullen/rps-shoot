@@ -181,7 +181,6 @@ function handleMessage(msg) {
             mySeriesWins === 2
               ? `You won the series ${mySeriesWins}-${theirSeriesWins}! 🏆`
               : `You lost the series ${mySeriesWins}-${theirSeriesWins}. 😭😭`;
-          resultDetail.textContent = "";
           clearSeriesState();
           btnRematch.hidden = false;
           btnBestOf3.hidden = true;
