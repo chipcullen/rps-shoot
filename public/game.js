@@ -23,7 +23,8 @@ function show(name) {
 // Elements
 const btnNewGame = document.getElementById("btn-new-game");
 const shareUrl = document.getElementById("share-url");
-const btnCopy = document.getElementById("btn-copy");
+const btnCopy  = document.getElementById("btn-copy");
+const btnShare = document.getElementById("btn-share");
 const gameStatus = document.getElementById("game-status");
 const choiceBtns = document.querySelectorAll(".choice");
 const resultOutcome = document.getElementById("result-outcome");
@@ -224,6 +225,18 @@ btnCopy.addEventListener("click", () => {
   navigator.clipboard.writeText(shareUrl.value).then(() => {
     btnCopy.textContent = "Copied!";
     setTimeout(() => (btnCopy.textContent = "Copy"), 2000);
+  });
+});
+
+if (navigator.share) {
+  btnShare.hidden = false;
+}
+
+btnShare.addEventListener("click", () => {
+  navigator.share({
+    title: "Rock, Paper, Scissors",
+    text: "Play Rock, Paper, Scissors with me!",
+    url: shareUrl.value,
   });
 });
 
