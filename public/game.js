@@ -67,7 +67,7 @@ function resetSeries() {
 }
 
 function showSeriesScore() {
-  const text = `Series: You ${mySeriesWins} — Them ${theirSeriesWins}`;
+  const text = `You ${mySeriesWins} — Them ${theirSeriesWins}`;
   seriesScore.textContent = text;
   seriesScore.hidden = false;
   gameSeriesScore.textContent = text;
@@ -179,8 +179,8 @@ function handleMessage(msg) {
         if (decided) {
           resultOutcome.textContent =
             mySeriesWins === 2
-              ? `You won the series ${mySeriesWins}-${theirSeriesWins}! 🏆`
-              : `You lost the series ${mySeriesWins}-${theirSeriesWins}. 😭😭`;
+              ? `You won ${mySeriesWins}-${theirSeriesWins}! 🏆`
+              : `You lost ${mySeriesWins}-${theirSeriesWins}. 😭😭`;
           clearSeriesState();
           btnRematch.hidden = false;
           btnBestOf3.hidden = true;
