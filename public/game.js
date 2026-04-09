@@ -317,6 +317,28 @@ btnGoHome.addEventListener("click", () => {
   show("lobby");
 });
 
+// --- Favicon + title ---
+(function () {
+  const emojis = ["🪨", "📄", "✂️"];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  ctx.font = "56px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(emoji, 32, 34);
+
+  const link = document.createElement("link");
+  link.rel = "icon";
+  link.href = canvas.toDataURL();
+  document.head.appendChild(link);
+
+  document.title = `${emoji} Rock, Paper, Scissors`;
+})();
+
 // --- On load: check for game param ---
 const params = new URLSearchParams(location.search);
 const roomParam = params.get("game");
